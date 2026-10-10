@@ -31,3 +31,4 @@ header{align-items:flex-start}.heading-group{min-width:0;flex:1;padding-right:12
 #menu.collapsed #menuToggle svg{transform:rotate(180deg)}
 @media(min-width:800px){#menu{right:30px}}@media(max-height:600px){#menu nav button{height:34px}#menu #options{max-height:54dvh}}
 @media(prefers-reduced-motion:reduce){#menuBody,#menu.collapsed #menuBody,#menu nav button,#menuToggle svg,#menu .option{transition:none}}
+#menuBody:has(.preset),#menuBody:has(.swatch){height:min(58dvh,440px);display:flex;align-items:center}@media(max-height:600px){#menuBody:has(.preset),#menuBody:has(.swatch){height:54dvh}}
