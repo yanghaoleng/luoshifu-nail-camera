@@ -1,0 +1,4 @@
+import{test}from'node:test';import assert from'node:assert/strict';import{applyPreset,nailState,presets}from'../src/presets.js';
+test('金色预设应用长甲和专用金属渲染',()=>{const state={};applyPreset(state,'gold',()=>.5);assert.equal(state.length,'long');assert.equal(nailState(state,0).texture,'gold');assert.ok(nailState(state,0).extension>1)});
+test('果冻五指不同色且重复点击刷新配色',()=>{const state={};applyPreset(state,'jelly',()=>.5);const previous=state.palette.join(',');assert.equal(new Set(state.palette).size,5);applyPreset(state,'jelly',()=>.5);assert.notEqual(state.palette.join(','),previous);assert.equal(state.length,'short');assert.equal(nailState(state,3).hex,state.palette[3])});
+test('每款有独立纹理；手动选色回到自定义渲染',()=>{assert.equal(new Set(presets.map(p=>p.texture)).size,6);const state={style:null,hex:'#123456'};assert.equal(nailState(state,0).hex,'#123456')});
