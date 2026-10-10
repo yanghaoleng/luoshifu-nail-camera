@@ -11,3 +11,23 @@ header{align-items:flex-start}.heading-group{min-width:0;flex:1;padding-right:12
 #brandTitle{margin:0;opacity:1;font:inherit;letter-spacing:inherit}.brand #brandTitle{font-size:inherit;margin-top:0;opacity:1}#options{max-height:65dvh;overflow-y:auto;padding:6px 5px;scrollbar-width:none}#options:has(.swatch){display:grid;grid-template-columns:repeat(3,34px);gap:12px;right:82px;top:-90px;max-height:66dvh}nav{gap:4px}nav button{height:55px}#transcript{overflow-x:hidden}@media(max-height:700px){nav button{height:44px}#options:has(.swatch){top:-65px}}
 
 .brand{font-size:22px;font-weight:750;gap:10px}#avatar{width:41px;height:41px}.title-meta{margin-left:51px}@media(max-width:370px){.brand{font-size:19px}}
+
+/* Compact selection menu */
+#menu{right:12px;top:48%;gap:9px;align-items:flex-end;pointer-events:none}
+#menuBody{position:relative;pointer-events:auto;transition:opacity 240ms ease,transform 280ms cubic-bezier(.2,.7,.2,1),visibility 0s;opacity:1;transform:translateX(0);visibility:visible}
+#menu nav{width:48px;padding:6px 4px;gap:3px;border-radius:26px}
+#menu nav button{width:38px;height:40px;gap:0;border-radius:20px;transition:background-color 220ms ease,color 220ms ease,transform 220ms ease}
+#menu nav button:active{transform:scale(.94)}
+#optionPanel{position:absolute;right:58px;top:50%;transform:translateY(-50%);width:72px}
+#menu #options{position:static;display:flex;flex-direction:column;align-items:center;gap:8px;width:72px;max-height:min(58dvh,440px);padding:7px 6px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;--fade-top:0px;--fade-bottom:0px;mask-image:linear-gradient(to bottom,transparent,black var(--fade-top),black calc(100% - var(--fade-bottom)),transparent);-webkit-mask-image:linear-gradient(to bottom,transparent,black var(--fade-top),black calc(100% - var(--fade-bottom)),transparent)}
+#menu .option{width:40px;min-height:40px;transition:background-color 200ms ease,border-color 200ms ease,outline-color 200ms ease}
+#menu .option.preset{width:60px;min-height:72px;padding:3px 2px 7px;gap:2px;border-radius:12px}
+#menu .preset canvas{width:36px;height:50px}#menu .preset span{font-size:10px}
+#menu #options:has(.swatch){display:grid;grid-template-columns:repeat(2,28px);gap:12px;justify-content:center;padding:8px 6px}
+#menu .swatch{width:28px;min-height:28px}
+#menuToggle{width:32px;height:28px;display:grid;place-items:center;margin-right:8px;border-radius:16px;background:#27232380;border:1px solid #ffffff25;backdrop-filter:blur(20px);pointer-events:auto}
+#menuToggle svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.7;transition:transform 280ms ease}
+#menu.collapsed #menuBody{opacity:0;transform:translateX(18px);visibility:hidden;pointer-events:none;transition:opacity 240ms ease,transform 280ms cubic-bezier(.2,.7,.2,1),visibility 0s 280ms}
+#menu.collapsed #menuToggle svg{transform:rotate(180deg)}
+@media(min-width:800px){#menu{right:30px}}@media(max-height:600px){#menu nav button{height:34px}#menu #options{max-height:54dvh}}
+@media(prefers-reduced-motion:reduce){#menuBody,#menu.collapsed #menuBody,#menu nav button,#menuToggle svg,#menu .option{transition:none}}
