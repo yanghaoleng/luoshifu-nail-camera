@@ -1,0 +1,15 @@
+[Unit]
+Description=Nail Camera Speech Proxy
+After=network.target
+[Service]
+User=www-data
+WorkingDirectory=/opt/nail-app/current
+EnvironmentFile=/etc/nail-app.env
+ExecStart=/usr/bin/node /opt/nail-app/current/server.mjs
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+[Install]
+WantedBy=multi-user.target
