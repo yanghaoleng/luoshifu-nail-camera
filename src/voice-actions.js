@@ -5,5 +5,6 @@ export function applyVoiceAction(command,state,calibration,random=Math.random){i
 if(command.randomStyle){const choices=presets.filter(p=>p.id!==state.style);applyPreset(state,choices[Math.floor(random()*choices.length)].id,random)}else if(command.style)applyPreset(state,command.style,random);
 if(command.randomColors&&(state.style==='jelly'||!command.style))applyPreset(state,'jelly',random);
 const custom=['length','color','finish'].filter(key=>command[key]);if(custom.length){if(!command.style&&!command.randomStyle&&!command.randomColors)state.style=null;for(const key of custom)state[key]=command[key]}
+if(command.pattern)state.pattern=command.pattern;
 for(const[key,delta,min,max]of[['width',command.widthDelta,.6,1.4],['offset',command.offsetDelta,.15,.65],['size',command.sizeDelta,.6,1.5]])if(delta)calibration[key]=clamp(calibration[key]+delta,min,max);
 return true}

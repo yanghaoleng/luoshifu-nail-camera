@@ -1,0 +1,3 @@
+import{createElement}from'react';import{createRoot}from'react-dom/client';import{Calligraph}from'calligraph';
+const roots=new WeakMap(),texts=new WeakMap();
+export function setText(element,value){const text=String(value);if(texts.get(element)===text)return;texts.set(element,text);if(matchMedia('(prefers-reduced-motion: reduce)').matches){roots.get(element)?.unmount();roots.delete(element);element.textContent=text;return}let root=roots.get(element);if(!root){root=createRoot(element);roots.set(element,root)}root.render(createElement(Calligraph,{variant:'text',animation:'smooth',initial:true,autoSize:false,drift:{x:10,y:0},trend:1,style:{flexWrap:'wrap',maxWidth:'100%',verticalAlign:'middle'}},text))}
