@@ -20,7 +20,7 @@ MediaPipe Hand Landmarker 的 21 点用于估算五个甲床的位置、朝向�
 
 npm install / npm run dev / npm run build / npm test。
 
-静态模型和 WASM 同域托管，不依赖 CDN。工作线程执行推理。Node 服务监听 127.0.0.1:8796，仅同域来源可以调用语音接口，限制每 IP 每分钟 40 次与 512KB 请求。服务：nail-app.service。独立发布目录：/opt/nail-app/releases，current 符号链接；Nginx 路由：/etc/nginx/snippets/nail-app.conf，实际引用在 sites-enabled/mikeywa.site。20261010-v8 是当前发布，旧版保留。其他原有网站文件未改动。
+静态模型和 WASM 同域托管，不依赖 CDN。工作线程执行推理。Node 服务监听 127.0.0.1:8796，仅同域来源可以调用语音接口，限制每 IP 每分钟 40 次与 512KB 请求。服务：nail-app.service。独立发布目录：/opt/nail-app/releases，current 符号链接；Nginx 路由：/etc/nginx/snippets/nail-app.conf，实际引用在 sites-enabled/mikeywa.site。20261010-v11 是当前发布，旧版保留。其他原有网站文件未改动。
 
 官方文档：
 - https://developers.google.cn/edge/mediapipe/solutions/vision/hand_landmarker/web_js
@@ -41,3 +41,9 @@ npm install / npm run dev / npm run build / npm test。
 “甲床再高一点/往上移、低一点/往下移”每次沿指尖方向移动 0.025；“宽一点/窄一点”只调整宽度 0.05；“大一点/小一点”调整甲片整体大小 0.05。同步菜单滑杆，并限制宽度 0.6–1.4、位置 0.15–0.65、整体大小 0.6–1.5。识别规则解析自然表达，未接入通用对话模型；只应用已识别的操作。
 
 下载提示改为纯文字百分比。11 项测试覆盖相对校准、范围、预设与随机指令、暂停/恢复和连续收音。
+
+## 豆包 mini 语义理解与布局
+
+新增 /nail/api/interpret，把转写和当前款式/校准值交给 doubao-seed-2-0-mini-260428，关闭深度思考，校验 JSON 操作后应用。支持审美描述如沉稳、温柔、可爱等的推理，不硬编码这些描述到固定款式。当前尚待有 mini 权限的方舟 API Key；现有配置试探返回 403，无访问权限，旧方舟配置返回 401。未配置时透明退回基础指令，识别文字会标明语义理解暂不可用。没有将模拟结果声称为真实模型验证。
+
+麦克风与转写放左下角；快门放右下角；标题文字正下方放黄色下载百分比和当前款式，下载完成后只保留当前款式。14项本地检查通过，手机390×844布局无横向溢出。mini真实自然语言验证待密钥补齐。
