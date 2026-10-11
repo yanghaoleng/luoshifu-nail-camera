@@ -30,7 +30,7 @@ function frame(time){
    fingerWidths.sample(video,poses,points,w,h,{scale:s,ox,oy},time);
    [4,8,12,16,20].forEach((tip,i)=>{
     let p=poses[i];const fitted=fingerWidths.fit(p,i,+$('#width').value,+$('#size').value);p={...p,w:fitted.width,h:p.h*+$('#size').value};
-    const old=smoothed[i];if(old){const a=Math.min(.85,.3+Math.hypot(p.x-old.x,p.y-old.y)/100);p={...p,x:old.x+(p.x-old.x)*a,y:old.y+(p.y-old.y)*a,w:old.w+(p.w-old.w)*.4,h:old.h+(p.h-old.h)*.4,depth:old.depth+((p.depth||0)-old.depth)*.35,angle:old.angle+Math.atan2(Math.sin(p.angle-old.angle),Math.cos(p.angle-old.angle))*a,basis:smoothBasis(old.basis,p.basis,a)}}p.w=Math.min(p.w,fitted.limit);smoothed[i]=p;
+    const old=smoothed[i];if(old){const a=Math.min(.85,.3+Math.hypot(p.x-old.x,p.y-old.y)/100);p={...p,x:old.x+(p.x-old.x)*a,y:old.y+(p.y-old.y)*a,h:old.h+(p.h-old.h)*.4,depth:old.depth+((p.depth||0)-old.depth)*.35,angle:old.angle+Math.atan2(Math.sin(p.angle-old.angle),Math.cos(p.angle-old.angle))*a,basis:smoothBasis(old.basis,p.basis,a)}}p.w=Math.min(p.w,fitted.limit);smoothed[i]=p;
     const prev=points[tip-2],dip=points[tip-1],end=points[tip];if((end.x-dip.x)*(dip.x-prev.x)+(end.y-dip.y)*(dip.y-prev.y)>0&&p.w>3&&p.visible!==false)nails.push({pose:p,state:nailState(state,i)});
     if($('#debug').checked){ctx.fillStyle='#67ffbd';ctx.beginPath();ctx.arc(p.x,p.y,3,0,7);ctx.fill()}
    });if(!recording&&time>statusUntil)status('已跟踪 5 个指尖 · 保持手背朝向镜头');

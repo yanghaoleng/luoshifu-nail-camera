@@ -28,28 +28,55 @@ export function measureFingerContour(pixels,stride,start=0,size=PATCH){
  const confidence=Math.min(1,(median(coherent.map(r=>r.contrast))-10)/35)*coherent.length/5;
  return confidence>=.35?{width,confidence}:null;
 }
-export function updateFingerWidth(previous,measurement,referenceLength){
- if(!measurement||referenceLength<8)return previous;
- const ratio=measurement.width/referenceLength;
- if(!Number.isFinite(ratio)||ratio<.25||ratio>1.6)return previous;
- const amount=previous?(ratio<previous.ratio?.45:.2):1;
- return{ratio:previous?previous.ratio+(ratio-previous.ratio)*amount:ratio,latestRatio:ratio,confidence:measurement.confidence};
+// Find the strongest group, not the mean of all five: one wide contour or
+// an occluded little finger must not drag the whole hand's estimate around.
+export function consensusFingerWidth(measurements){
+ const valid=measurements.filter(m=>m&&Number.isFinite(m.ratio)&&m.ratio>=.25&&m.ratio<=1.6&&m.confidence>=.35);
+ if(valid.length<3)return null;
+ let best=null;
+ for(const seed of valid){
+  const group=valid.filter(m=>Math.abs(m.ratio-seed.ratio)<=seed.ratio*.14);
+  const weights=group.map(m=>m.confidence*Math.exp(-.5*((m.ratio-seed.ratio)/(seed.ratio*.1))**2));
+  const score=weights.reduce((a,b)=>a+b,0);
+  if(group.length>=3&&(!best||score>best.score))best={group,weights,score};
+ }
+ if(!best)return null;
+ const ratio=best.group.reduce((sum,m,i)=>sum+m.ratio*best.weights[i],0)/best.score;
+ return{ratio,confidence:best.score/valid.length,support:best.group.length};
 }
-export function fitNailWidth(fallbackWidth,referenceLength,estimate,widthScale=1,size=1){
- const fingerWidth=estimate?referenceLength*estimate.ratio:fallbackWidth*.78/COVERAGE;
- const currentLimit=estimate?referenceLength*Math.min(estimate.ratio,estimate.latestRatio)*LIMIT:fingerWidth*LIMIT;
- return{width:Math.min(fingerWidth*COVERAGE*widthScale*size,currentLimit),limit:currentLimit,source:estimate?'contour':'fallback'};
+export function updateSharedWidth(previous,measurement){
+ if(!measurement)return previous;
+ if(!previous)return measurement;
+ // Filter in hand-relative units. A moving hand still scales immediately with
+ // its common reference; contour noise cannot resize a nail independently.
+ const change=(measurement.ratio-previous.ratio)*.18;
+ const bounded=Math.max(-previous.ratio*.025,Math.min(previous.ratio*.025,change));
+ return{...measurement,ratio:previous.ratio+bounded};
+}
+export function fitSharedNailWidth(reference,estimate,fallbackRatio,widthScale=1,size=1){
+ const fingerWidth=reference*(estimate?.ratio??fallbackRatio);
+ const limit=fingerWidth*LIMIT;
+ return{width:Math.min(fingerWidth*COVERAGE*widthScale*size,limit),limit,source:estimate?'consensus':'fallback'};
 }
 export function createFingerWidthTracker(){
- const canvas=document.createElement('canvas');canvas.width=PATCH*COUNT;canvas.height=PATCH;const ctx=canvas.getContext('2d',{willReadFrequently:true});let estimates=[],last=0;
- return{reset(){estimates=[];last=0},sample(video,poses,points,width,height,mapping,time){
+ const canvas=document.createElement('canvas');canvas.width=PATCH*COUNT;canvas.height=PATCH;const ctx=canvas.getContext('2d',{willReadFrequently:true});let estimates=[],last=0,shared=null,reference=0,fallbackRatio=.65;
+ return{reset(){estimates=[];last=0;shared=null;reference=0;fallbackRatio=.65},sample(video,poses,points,width,height,mapping,time){
+  // Keep scale independent of which nail faces the camera during a roll.
+  const usable=poses.filter(p=>Number.isFinite(p.h)&&p.h/.78>=8);
+  if(!usable.length)return;
+  const rawReference=median(usable.map(p=>p.h/.78));
+  reference=reference?reference+(rawReference-reference)*.28:rawReference;
+  if(!shared)fallbackRatio=median(usable.map(p=>p.w*.78/COVERAGE))/rawReference;
   if(time-last<100)return;last=time;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);const spans=[];
-  poses.forEach((p,i)=>{const tip=[4,8,12,16,20][i],a=points[tip],b=points[tip-1],dx=(a.x-b.x)*width,dy=(a.y-b.y)*height,len=Math.hypot(dx,dy),reference=p.h/.78;
-   if(len/mapping.scale<9||reference<8||!Number.isFinite(reference)||p.visible===false)return;
-   const cx=b.x*width+dx*.7,cy=b.y*height+dy*.7,span=reference*1.7,sx=PATCH/span,sy=PATCH/(len*.22),c=Math.cos(p.angle),s=Math.sin(p.angle);
-   spans[i]={span,reference};ctx.save();ctx.beginPath();ctx.rect(i*PATCH,0,PATCH,PATCH);ctx.clip();ctx.setTransform(sx*c,-sy*s,sx*s,sy*c,i*PATCH+PATCH/2-sx*(c*cx+s*cy),PATCH/2-sy*(-s*cx+c*cy));ctx.drawImage(video,mapping.ox,mapping.oy,video.videoWidth*mapping.scale,video.videoHeight*mapping.scale);ctx.restore();
+  poses.forEach((p,i)=>{const tip=[4,8,12,16,20][i],a=points[tip],b=points[tip-1],dx=(a.x-b.x)*width,dy=(a.y-b.y)*height,len=Math.hypot(dx,dy),bone=p.h/.78;
+   if(len/mapping.scale<9||bone<8||!Number.isFinite(bone)||p.visible===false)return;
+   const cx=b.x*width+dx*.7,cy=b.y*height+dy*.7,span=bone*1.7,sx=PATCH/span,sy=PATCH/(len*.22),c=Math.cos(p.angle),s=Math.sin(p.angle);
+   spans[i]={span};ctx.save();ctx.beginPath();ctx.rect(i*PATCH,0,PATCH,PATCH);ctx.clip();ctx.setTransform(sx*c,-sy*s,sx*s,sy*c,i*PATCH+PATCH/2-sx*(c*cx+s*cy),PATCH/2-sy*(-s*cx+c*cy));ctx.drawImage(video,mapping.ox,mapping.oy,video.videoWidth*mapping.scale,video.videoHeight*mapping.scale);ctx.restore();
   });
   const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
-  spans.forEach(({span,reference},i)=>{const measured=measureFingerContour(pixels,canvas.width,i*PATCH);if(measured)estimates[i]=updateFingerWidth(estimates[i],{width:measured.width/PATCH*span,confidence:measured.confidence},reference)});
- },fit(pose,index,widthScale,size){return fitNailWidth(pose.w,pose.h/.78,estimates[index],widthScale,size)},get estimates(){return estimates}};
+  spans.forEach(({span},i)=>{const measured=measureFingerContour(pixels,canvas.width,i*PATCH);if(measured)estimates[i]={ratio:measured.width/PATCH*span/rawReference,confidence:measured.confidence,time}});
+  // Expire stale fingers; retain the previous consensus during brief occlusion.
+  const fresh=estimates.filter(m=>m&&time-m.time<450).map(m=>({...m,confidence:m.confidence*Math.exp(-(time-m.time)/650)}));
+  shared=updateSharedWidth(shared,consensusFingerWidth(fresh));
+ },fit(pose,index,widthScale=1,size=1){return fitSharedNailWidth(reference||pose.h/.78,shared,fallbackRatio,widthScale,size)},get estimates(){return estimates},get consensus(){return shared}};
 }

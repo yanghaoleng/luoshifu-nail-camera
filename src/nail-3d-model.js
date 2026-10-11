@@ -13,7 +13,11 @@ if(tip===4){const local=unit(cross(sub(point(world[3]),point(world[2])),sub(poin
 const basis=basisFromNormal(finger,normal),physicalLength=Math.hypot(...finger)*frame.pixelsPerMeter;const previous=sub(point(world[tip-1]),point(world[tip-2]));const folded=dot(unit(finger),unit(previous))<.05;return{...p,w:physicalLength*(tip===4?.72:.62)*widthScale*size,h:physicalLength*.78*size,basis,depth:-world[tip].z*frame.pixelsPerMeter,visible:!folded&&basis.z[2]>-.1}}
 export function smoothBasis(old,basis,amount=.35){if(!old)return basis;const mix=k=>unit(old[k].map((v,i)=>v+(basis[k][i]-v)*amount));return basisFromNormal(mix('y'),mix('z'))}
 export function createNailGeometry(columns=16,rows=28,shape='rounded'){const positions=[],uv=[],indices=[];const stride=columns+1,layer=(rows+1)*stride;
-for(let underside=0;underside<2;underside++)for(let j=0;j<=rows;j++){const v=j/rows;const shoulder=Math.sqrt(Math.max(.001,1-Math.pow((v-.45)/.56,4)));const half=.5*(shape==='square'&&v>=.45?(v>.94?1-.14*((v-.94)/.06)**2:1):shoulder);for(let i=0;i<=columns;i++){const t=i/columns*2-1,x=t*half,y=v- .5;const crown=.16*(1-t*t)*( .82+.18*Math.sin(Math.PI*v));const longitudinal=.028*Math.sin(Math.PI*v);positions.push(x,y,underside?-.022:crown+longitudinal);uv.push(i/columns,v)}}
+for(let underside=0;underside<2;underside++)for(let j=0;j<=rows;j++){const v=j/rows;const shoulder=Math.sqrt(Math.max(.001,1-Math.pow((v-.45)/.56,4)));const half=.5*(shape==='square'&&v>=.45?(v>.94?1-.14*((v-.94)/.06)**2:1):shoulder);for(let i=0;i<=columns;i++){const t=i/columns*2-1,x=t*half,y=v- .5;// Circular C-curve on both faces: a thin shell hugging a cylindrical finger.
+const radius=.72,crown=Math.sqrt(radius*radius-x*x)-Math.sqrt(radius*radius-half*half);
+// A modest longitudinal arch and extra builder thickness at the stress apex.
+const arch=.022*Math.sin(Math.PI*v),apex=.045*Math.exp(-(((v-.42)/.23)**2))*(1-t*t);
+const z=crown+arch+(underside?-.012:.012+apex);positions.push(x,y,z);uv.push(i/columns,v)}}
 for(let j=0;j<rows;j++)for(let i=0;i<columns;i++){const a=j*stride+i,b=a+1,c=a+stride,d=c+1;indices.push(a,b,c,b,d,c,a+layer,c+layer,b+layer,b+layer,c+layer,d+layer)}
 const ring=[];for(let i=0;i<=columns;i++)ring.push(i);for(let j=1;j<=rows;j++)ring.push(j*stride+columns);for(let i=columns-1;i>=0;i--)ring.push(rows*stride+i);for(let j=rows-1;j>0;j--)ring.push(j*stride);
 for(let i=0;i<ring.length;i++){const a=ring[i],b=ring[(i+1)%ring.length];indices.push(a,a+layer,b,b,a+layer,b+layer)}
