@@ -5,7 +5,7 @@ export function parseCommand(text){const result={};if(/^(不要|别|不需要)(�
  if(/(?:随机|随便).*(?:款|推荐)|推荐.*款|来.*随机.*款/.test(text))result.randomStyle=true;
  if(/(?:随机|再|重新|换).*(?:配色|颜色)|(?:配色|颜色).*随机/.test(text))result.randomColors=true;
  if(/短款|短甲|短一点|短一些/.test(text))result.length='short';else if(/中款|中长|中等长度/.test(text))result.length='medium';else if(/长款|长甲|长一点|长一些/.test(text))result.length='long';
- if(/猫眼/.test(text))result.finish='cat';else if(/纯色/.test(text))result.finish='solid';
+ if(/猫眼/.test(text))result.finish='cat';else if(/哑光|哑面|磨砂/.test(text))result.finish='matte';else if(/纯色|光面|亮面|亮光/.test(text))result.finish='solid';
  const matches=colors.flatMap(([name,,aliases])=>aliases.filter(a=>text.includes(a)).map(a=>({name,size:a.length}))).sort((a,b)=>b.size-a.size);if(matches.length)result.color=matches[0].name;
  for(const p of patterns)if(p.id!=='none'&&text.includes(p.name))result.pattern=p.id;if(/星星|星形/.test(text))result.pattern='stars';if(/波点|圆点/.test(text))result.pattern='dots';if(/去掉图案|不要图案|无图案/.test(text))result.pattern='none';
  const direction=(pattern)=>{let delta=0;for(const match of text.matchAll(pattern))delta=/高|上|宽|大|放大/.test(match[1])?1:-1;return delta};
