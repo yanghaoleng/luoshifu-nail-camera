@@ -17,6 +17,7 @@ export function createAnalytics({file=process.env.NAIL_ANALYTICS_FILE||'/var/lib
  if(!secret)error='统计采集尚未配置';
  const flush=()=>{if(timer){clearTimeout(timer);timer=null}if(error)return;try{mkdirSync(dirname(file),{recursive:true,mode:0o700});writeFileSync(file+'.tmp',JSON.stringify(data),{mode:0o600});renameSync(file+'.tmp',file)}catch{error='统计写入失败'}};
  const changed=()=>{data.updatedAt=new Date(now()).toISOString();const cutoff=dayKey(now()-89*86400000);for(const k of Object.keys(data.days))if(k<cutoff)delete data.days[k];if(!timer){timer=setTimeout(flush,500);timer.unref()}};
+ flush();
  return{get error(){return error},flush,collect(input){const e=sanitizeEvent(input);if(!e||error)return false;const day=dayKey(now()),d=data.days[day]??=freshDay(),id=createHmac('sha256',secret).update(day+e.session).digest('hex');
   if(!d.sessions[id]&&Object.keys(d.sessions).length>=6000)return false;const flags=d.sessions[id]??=[];
   const flag=e.type==='page_view'||e.type.startsWith('model_')?e.type:e.type+':'+e.mode;
